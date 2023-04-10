@@ -31,14 +31,14 @@ public abstract class BaseNetwork
 
     protected void BackPropagation(NDArray predictions, NDArray targets, double learningRate)
     {
-        var outputDerivatives = _lossFunction.ComputeLossDerivatives(predictions, targets);
+        var gradients = _lossFunction.ComputeLossDerivatives(predictions, targets);
         for (var i = Layers.Count - 1; i > -1; i--)
         {
-            Layers[i].BackwardPass(outputDerivatives, learningRate);
-            outputDerivatives = np.dot(outputDerivatives, Layers[i].Weights.T);
+            Layers[i].BackwardPass(gradients, learningRate);
+            gradients = np.dot(gradients, Layers[i].Weights.T);
             if (i > 0 && Layers[i - 1].ActivationFunction is not null)
             {
-                outputDerivatives *=  Layers[i - 1].ActivationFunction?.Derivative(Layers[i].Inputs);
+                gradients *=  Layers[i - 1].ActivationFunction?.Derivative(Layers[i-1].Outputs);
             }
         }
     }
