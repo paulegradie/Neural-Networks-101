@@ -15,7 +15,9 @@ model.compile(optimizer: keras.optimizers.SGD((float)0.001), loss: new MeanSquar
 
 // create some data
 Random Rand = new();
-using var xs = np.array(Enumerable.Range(0, 10000).Select(_ => (double)Rand.Next(-10, 11)).ToArray()).reshape(new Shape(-1, 1)).astype(np.float32);
+using var xs = np
+    .array(Enumerable.Range(0, 10000).Select(_ => (double)Rand.Next(-10, 11)).ToArray())
+    .reshape(new Shape(-1, 1)).astype(np.float32);
 using var ys = np.power(xs, 2).astype(np.float32);
 model.fit(
     xs,
@@ -38,9 +40,4 @@ while (true)
         var result = model.predict(np.array(number).astype(np.float32).reshape(new Shape(1, 1)));
         Console.WriteLine($"{number}^2 = {result}");
     }
-}
-
-public class YourMom
-{
-    
 }
