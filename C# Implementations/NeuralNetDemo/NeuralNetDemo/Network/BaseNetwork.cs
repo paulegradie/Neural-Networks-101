@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using NeuralNetDemo.ActivationFunctions;
+﻿using NeuralNetDemo.ActivationFunctions;
 using NeuralNetDemo.LossFunctions;
 using NeuralNetDemo.Maths;
 
@@ -8,7 +7,7 @@ namespace NeuralNetDemo.Network;
 public abstract class BaseNetwork
 {
     private readonly ILossFunction _lossFunction;
-    protected readonly List<DenseLayer> Layers = new();
+    public readonly List<DenseLayer> Layers = new();
 
     protected BaseNetwork(ILossFunction lossFunction)
     {
@@ -17,33 +16,28 @@ public abstract class BaseNetwork
 
     public double Predict(double input)
     {
-        var x = new List<List<double>> { new() { input } };
+        var x = new Matrix(1, 1, () => input);
         var prediction = ForwardPass(x, training: false);
         return prediction[0][0];
     }
 
-    protected List<List<double>> TrainingForwardPass(List<List<double>> inputs)
+    protected Matrix TrainingForwardPass(Matrix inputs)
     {
         return ForwardPass(inputs, true);
     }
 
-    private List<List<double>> ForwardPass(List<List<double>> inputs, bool training)
+    private Matrix ForwardPass(Matrix inputs, bool training)
     {
-        var x = inputs;
-        foreach (var layer in Layers)
-        {
-            x = layer.ForwardPass(x, training);
-        }
-
-        return x;
+        return Layers
+            .Aggregate(inputs, (current, layer) => layer.ForwardPass(current, training));
     }
 
-    public void AddDenseLayer(int nOutputs, IActivationFunction? activationFunction, bool withBias, string? name)
+    public void AddDenseLayer(int nOutputs, IActivationFunction? activationFunction, string? name)
     {
-        AddDenseLayer(-1, nOutputs, activationFunction, withBias, name);
+        AddDenseLayer(-1, nOutputs, activationFunction, name);
     }
 
-    public void AddDenseLayer(int nInputs, int nOutputs, IActivationFunction? activationFunction, bool withBias, string? name)
+    public void AddDenseLayer(int nInputs, int nOutputs, IActivationFunction? activationFunction, string? name)
     {
         if (nInputs <= 0) // if user doesn't specify the row dimension
         {
@@ -52,7 +46,7 @@ public abstract class BaseNetwork
                 // detect cols dim from previous later
                 var numPrevLayerCols = Layers.Last().Shape.Item2;
                 // set layer dims
-                Layers.Add(new DenseLayer(numPrevLayerCols, nOutputs, activationFunction, withBias, name));
+                Layers.Add(new DenseLayer(numPrevLayerCols, nOutputs, activationFunction, name));
             }
             else // if first layer
             {
@@ -69,29 +63,26 @@ public abstract class BaseNetwork
                 }
             }
 
-            Layers.Add(new DenseLayer(nInputs, nOutputs, activationFunction, withBias, name));
+            Layers.Add(new DenseLayer(nInputs, nOutputs, activationFunction, name));
         }
     }
 
-    [SuppressMessage("ReSharper.DPA", "DPA0001: Memory allocation issues")]
-    protected void BackProp(List<List<double>> predictions, List<List<double>> targets, double learningRate)
+    protected void BackProp(Matrix predictions, Matrix targets, double lr)
     {
-        var partialDerivatives = new List<List<double>>();
-        for (var i = Layers.Count - 1; i > -1; i--)
+        var gradient = _lossFunction.ComputeGradient(predictions, targets);
+
+        var enumerated = Enumerable.Range(0, Layers.Count).Zip(Layers).ToList();
+        enumerated.Reverse();
+
+        foreach (var (i, layer) in enumerated)
         {
-            var layer = Layers[i];
+            layer.Update(gradient, lr);
+            gradient = gradient.DotProduct(layer.Weights.Transpose());
 
-            if (i == Layers.Count - 1) // if the last layer
+            if (i > 0 && Layers[i - 1].HasActivationFunction)
             {
-                partialDerivatives = _lossFunction.ComputeLossDerivatives(targets, predictions);
+                gradient = gradient.Multiply(layer.Inputs!.Apply(Layers[i - 1].ActivationFunction!.Derivative));
             }
-            else
-            {
-                var previousLayer = Layers[i + 1];
-                partialDerivatives = partialDerivatives.Dot(previousLayer.Weights.Transpose());
-            }
-
-            partialDerivatives = layer.BackPropPass(partialDerivatives, learningRate);
         }
     }
 }

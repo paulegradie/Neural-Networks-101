@@ -1,23 +1,17 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using NeuralNetDemo.Maths;
 
 namespace NeuralNetDemo;
 
 public static class Data
 {
-    public static readonly Random Rand = new();
+    private static readonly Random Rand = new();
 
     [SuppressMessage("ReSharper.DPA", "DPA0001: Memory allocation issues")]
-    public static (List<List<double>>, List<List<double>>) GenerateBatch(int batchSize)
+    public static (Matrix, Matrix) GenerateBatch(int batchSize, int min, int max)
     {
-        var batchXs = new List<List<double>>();
-        var batchYs = new List<List<double>>();
-        for (var i = 0; i < batchSize; i++)
-        {
-            var val = (double)Rand.Next(-10, 11);
-            batchXs.Add(new List<double>() { val });
-            batchYs.Add(new List<double>() { Math.Pow(val, 2) });
-        }
-
+        var batchXs = new Matrix(batchSize, 1, () => (double)Rand.Next(min, max));
+        var batchYs = batchXs.Apply(currentVal => Math.Pow(currentVal, 2));
         return (batchXs, batchYs);
     }
 }

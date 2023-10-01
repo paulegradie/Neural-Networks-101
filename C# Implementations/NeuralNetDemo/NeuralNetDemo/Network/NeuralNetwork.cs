@@ -1,4 +1,5 @@
-﻿using NeuralNetDemo.LossFunctions;
+﻿using System.Globalization;
+using NeuralNetDemo.LossFunctions;
 
 namespace NeuralNetDemo.Network;
 
@@ -10,22 +11,25 @@ public class NeuralNetwork : BaseNetwork
     {
         _lossFunction = lossFunction;
     }
-    public void Train(int nIterations, int batchSize, double learningRate)
+
+    public void Train(int batchSize, double learningRate, double targetLoss, int numReportingSteps)
     {
-        for (var iteration = 0; iteration < nIterations; iteration++)
+        var loss = 1000.0;
+        var step = 0;
+
+        while (loss > targetLoss)
         {
-            var (inputs, targets) = Data.GenerateBatch(batchSize);
-
+            var (inputs, targets) = Data.GenerateBatch(batchSize, -5, 5);
             var predictions = TrainingForwardPass(inputs);
+            BackProp(predictions, targets, learningRate);
 
-            if (iteration % 400 == 0)
+            loss = _lossFunction.ComputeLoss(predictions, targets);
+            if (step % numReportingSteps == 0)
             {
-                var loss = _lossFunction.ComputeLoss(predictions, targets);
-                const int val = 7;
-                Console.WriteLine($"Current Iteration: {iteration} - Loss: {loss} -- Example Prediction f({val}) = {Predict(val)}");
+                Console.WriteLine($"Step: {step}, Loss: {loss.ToString(CultureInfo.InvariantCulture)}, Pred(3): {Predict(3.0)}");
             }
 
-            BackProp(predictions, targets, learningRate);
+            step += 1;
         }
     }
 }

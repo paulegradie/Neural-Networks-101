@@ -2,17 +2,12 @@
 using NeuralNetDemo.LossFunctions;
 using NeuralNetDemo.Network;
 
-const int batchSize = 10;
-const int nIterations = 80_000;
-const int hiddenSize = 12;
-const double learningRate = 0.0001;
-const int nInputFeatures = 1;
-const int nOutputFeatures = 1;
+const int batchSize = 30;
+const double learningRate = 0.001;
 
 var network = new NeuralNetwork(new SumOfSquaresLossFunction());
-network.AddDenseLayer(nInputFeatures, hiddenSize, new ReluActivation(), true, "Hidden Weights");
-network.AddDenseLayer(nOutputFeatures, null, true, "Output Weights");
+network.AddDenseLayer(1, 32, new LogisticActivation(), "Hidden");
+network.AddDenseLayer(32, 1, null, "Output");
 
-network.Train(nIterations, batchSize, learningRate);
-network.Train(nIterations, batchSize, learningRate);
+network.Train(batchSize, learningRate, 5.0, 5000);
 Console.WriteLine(network.Predict(5));

@@ -1,7 +1,9 @@
-﻿namespace NeuralNetDemo.LossFunctions;
+﻿using NeuralNetDemo.Maths;
+
+namespace NeuralNetDemo.LossFunctions;
 
 public interface ILossFunction
 {
-    double ComputeLoss(List<List<double>> predictions, List<List<double>> targets);
-    List<List<double>> ComputeLossDerivatives(List<List<double>> predictions, List<List<double>> targets);
+    double ComputeLoss(Matrix predictions, Matrix targets);
+    Matrix ComputeGradient(Matrix predictions, Matrix targets);
 }
