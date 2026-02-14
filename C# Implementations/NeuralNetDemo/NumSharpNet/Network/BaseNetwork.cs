@@ -34,12 +34,14 @@ public abstract class BaseNetwork
         var gradients = _lossFunction.ComputeLossDerivatives(predictions, targets);
         for (var i = Layers.Count - 1; i > -1; i--)
         {
-            Layers[i].BackwardPass(gradients, learningRate);
-            gradients = np.dot(gradients, Layers[i].Weights.T);
+            var propagatedGradients = np.dot(gradients, Layers[i].Weights.T);
             if (i > 0 && Layers[i - 1].ActivationFunction is not null)
             {
-                gradients *=  Layers[i - 1].ActivationFunction?.Derivative(Layers[i-1].Outputs);
+                propagatedGradients = np.multiply(propagatedGradients, Layers[i - 1].ActivationFunction?.Derivative(Layers[i - 1].Outputs));
             }
+
+            Layers[i].BackwardPass(gradients, learningRate);
+            gradients = propagatedGradients;
         }
     }
 }

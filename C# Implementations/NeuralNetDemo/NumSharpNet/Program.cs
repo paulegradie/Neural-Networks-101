@@ -14,4 +14,5 @@ network.AddDenseLayer(16, 1, activationFunction: null,  "Output Layer");
 
 network.Train(nIterations, batchSize, learningRate);
 
-Console.WriteLine(network.Predict(np.array(2).reshape(1, 1).astype(np.float32)).ToArray<double>()[0]);
+var examplePrediction = network.Predict(np.array(2).reshape(1, 1).astype(np.float32));
+Console.WriteLine(examplePrediction.GetValue());

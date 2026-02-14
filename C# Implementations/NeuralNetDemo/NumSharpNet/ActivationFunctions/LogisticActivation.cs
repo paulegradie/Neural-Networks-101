@@ -11,6 +11,6 @@ public class LogisticActivation : IActivationFunction
 
     public NDArray Derivative(NDArray x)
     {
-        return x * (1.0 - x);
+        return np.multiply(x, np.subtract(np.array(1.0), x)); 
     }
 }

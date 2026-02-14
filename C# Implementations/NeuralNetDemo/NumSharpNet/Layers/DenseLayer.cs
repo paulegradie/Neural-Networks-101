@@ -25,7 +25,7 @@ public class DenseLayer : ILayer
 
     public NDArray ForwardPass(NDArray inputs, bool training)
     {
-        var output = inputs.dot(Weights) + Bias;
+        var output = np.add(inputs.dot(Weights), Bias);
         if (ActivationFunction is not null)
         {
             output = ActivationFunction.Activate(output);
@@ -43,7 +43,7 @@ public class DenseLayer : ILayer
     public void BackwardPass(NDArray derivatives, double learningRate)
     {
         if (Inputs is null || Outputs is null) throw new Exception("didn't track inputs and outputs during training forward pass");
-        Weights -= Inputs.T.dot(derivatives) * learningRate;
-        Bias -= np.sum(derivatives, 0) * learningRate;
+        Weights -= np.multiply(Inputs.T.dot(derivatives), np.array(learningRate));
+        Bias -= np.multiply(np.sum(derivatives, 0), np.array(learningRate));
     }
 }

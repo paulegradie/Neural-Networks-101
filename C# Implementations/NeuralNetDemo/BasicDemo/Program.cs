@@ -1,8 +1,8 @@
 ﻿using NumSharp;
 
 var lr = 0.0001;
-var hidden_size = 16;
-var batch_size = 50;
+var hidden_size = 32;
+var batch_size = 20;
 var samples_seen = 0;
 var num_iterations = 100000;
 
@@ -16,28 +16,24 @@ var losses = new List<double>();
 for (var _ = 0; _ < num_iterations; _++)
 {
     var (xs, ys) = FofX.GenerateBatch(batch_size);
-    samples_seen += 1 * batch_size;
+    samples_seen +=  batch_size;
 
     var hidden_layer_out = Logistic.Activate(np.dot(xs, hidden_weights) + hidden_bias);
     var pred = np.dot(hidden_layer_out, output_weights) + output_bias;
 
-    var err = SumOfSquaresLoss.ComputeLoss(pred, ys);
-    losses.Add(err);
+    losses.Add(SumOfSquaresLoss.ComputeLoss(pred, ys));
 
     var output_derivatives = SumOfSquaresLoss.ComputeLossDerivatives(pred, ys);
+    var hidden_derivatives = np.dot(output_derivatives, output_weights.T) * Logistic.Derivative(hidden_layer_out);
+
     output_weights -= np.dot(hidden_layer_out.T, output_derivatives) * lr;
     output_bias -= np.sum(output_derivatives, axis: 0) * lr;
-
-    var hidden_derivatives = np.dot(output_derivatives, output_weights.T) * Logistic.Derivative(hidden_layer_out);
     hidden_weights -= np.dot(xs.T, hidden_derivatives) * lr;
     hidden_bias -= np.sum(hidden_derivatives, axis: 0) * lr;
 
-
     if (_ % 500 == 0)
     {
-        Console.WriteLine($"Current batch loss: {err}");
-        var inputArray = np.array(4).reshape(1, 1);
-        Console.WriteLine($"Going for {4}**2 = {Predictions.Predict(inputArray, hidden_weights, output_weights, hidden_bias, output_bias)[0][0]}");
+        Console.WriteLine($"Current batch loss: {losses.Last()}");
     }
 }
 
@@ -63,7 +59,6 @@ public static class FofX
         return (batchXs, batchYs);
     }
 }
-
 
 public static class SumOfSquaresLoss
 {

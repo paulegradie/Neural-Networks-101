@@ -70,19 +70,25 @@ public abstract class BaseNetwork
     protected void BackProp(Matrix predictions, Matrix targets, double lr)
     {
         var gradient = _lossFunction.ComputeGradient(predictions, targets);
+        var weightSnapshots = Layers
+            .Select(layer => new Matrix(layer.Weights.Select(row => new Vector(row))))
+            .ToList();
 
-        var enumerated = Enumerable.Range(0, Layers.Count).Zip(Layers).ToList();
-        enumerated.Reverse();
-
-        foreach (var (i, layer) in enumerated)
+        for (var i = Layers.Count - 1; i > -1; i--)
         {
+            var layer = Layers[i];
+            var layerWeightsAtForwardPass = weightSnapshots[i];
+
             layer.Update(gradient, lr);
-            gradient = gradient.DotProduct(layer.Weights.Transpose());
+            var propagatedGradient = gradient.DotProduct(layerWeightsAtForwardPass.Transpose());
 
             if (i > 0 && Layers[i - 1].HasActivationFunction)
             {
-                gradient = gradient.Multiply(layer.Inputs!.Apply(Layers[i - 1].ActivationFunction!.Derivative));
+                propagatedGradient = propagatedGradient.Multiply(
+                    layer.Inputs!.Apply(Layers[i - 1].ActivationFunction!.Derivative));
             }
+
+            gradient = propagatedGradient;
         }
     }
 }
